@@ -32,6 +32,10 @@ jQuery(function ($) {
 
 	var App = {
 		init: function () {
+			Pusher.log = function(msg) { console.log(msg); };
+			var pusher = new Pusher('11de1544091593e42cc8', {encrypted:true});
+			var socketAdapter = new PusherSocketIOAdapter(pusher);
+			
 			var lowla = this.lowla = new LowlaDB({ datastore: 'Memory' });
       lowla.on('pullBegin', function() {
         console.log("Pull beginning");
@@ -48,7 +52,7 @@ jQuery(function ($) {
       });
 
       this.todos = lowla.collection('lowlaSample', 'todos');
-      lowla.sync(location.protocol + '//' + location.host);
+      lowla.sync(location.protocol + '//' + location.host, {io: socketAdapter});
       this.todos.find({}).sort('title').on(function(err, cursor) {
         this.render(cursor);
       }.bind(this));
