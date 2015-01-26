@@ -4,11 +4,19 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var io = require('socket.io');
 var lowladb = require('lowladb-node');
+var Pusher = require('pusher');
+var PusherLowlaDBNotifier = require('./PusherLowlaDBNotifier');
 
 var app = express();
 var server = require('http').Server(app);
+var pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID,
+  key: process.env.PUSHER_APP_KEY,
+  secret: process.env.PUSHER_APP_SECRET,
+  encrypted: true
+});
+var pusherNotifier = new PusherLowlaDBNotifier(pusher);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -22,7 +30,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'todomvc')));
 
-lowladb.configureRoutes(app, { io: io(server) });
+lowladb.configureRoutes(app, {notifier: pusherNotifier.getNotifier()});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
